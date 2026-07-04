@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Enterprise Employee Management System
 
 # Tech stack
@@ -10,3 +11,6 @@ orchestration: kubernetes
 CI/CD: Jenkins
 monitoring: prometheus + Grafana
 Logging: Loki
+=======
+# employee-management
+>>>>>>> e9cfa7ac9366609b8fea193310e8174c6b1a9902
