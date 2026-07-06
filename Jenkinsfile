@@ -3,7 +3,13 @@ pipeline {
 
     stages {
 
-        stage('Linux') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('List Files') {
             steps {
                 sh 'pwd'
                 sh 'ls -la'
@@ -12,7 +18,29 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t employee-app:v1 ./backend'
+                sh 'docker build -t vamsikrishnakondeti/employee-app:v1 ./backend'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh 'docker push vamsikrishnakondeti/employee-app:v1'
             }
         }
 
@@ -25,8 +53,13 @@ pipeline {
     }
 
     post {
+
         success {
-            echo 'Pipeline Success'
+            echo 'Pipeline Finished Successfully'
+        }
+
+        failure {
+            echo 'Pipeline Failed'
         }
 
         always {
