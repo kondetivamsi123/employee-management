@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: employee-app
+  namespace: employee-management
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: employee-app
+
+  template:
+    metadata:
+      labels:
+        app: employee-app
+
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+
+      containers:
+        - name: employee-app
+          image: vamsiar001.azurecr.io/employee-app:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000

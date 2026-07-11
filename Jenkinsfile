@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "vamsiar001.azurecr.io/employee-app:v1"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -18,21 +22,22 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t vamsikrishnakondeti/employee-app:v1 ./backend'
+                sh 'docker build -t $IMAGE_NAME ./backend'
             }
         }
 
-        stage('Docker Login') {
+        stage('ACR Login') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'acr',
+                    usernameVariable: 'ACR_USER',
+                    passwordVariable: 'ACR_PASS'
+                )]) {
+
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    echo $ACR_PASS | docker login vamsiar001.azurecr.io \
+                    -u $ACR_USER \
+                    --password-stdin
                     '''
                 }
             }
@@ -40,16 +45,19 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                sh 'docker push vamsikrishnakondeti/employee-app:v1'
+                sh 'docker push $IMAGE_NAME'
             }
         }
 
-        stage('Docker Compose') {
+        stage('Deploy Kubernetes') {
             steps {
-                sh 'docker compose up -d'
+                sh '''
+                kubectl apply -f kubernetes/namespace.yaml
+                kubectl apply -f kubernetes/deployment.yaml
+                kubectl apply -f kubernetes/service.yaml
+                '''
             }
         }
-
     }
 
     post {
