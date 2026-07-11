@@ -55,7 +55,19 @@ pipeline {
         stage('Deploy Kubernetes') {
             steps {
                 sh '''
-                kubectl apply -f kubernetes/
+                echo "Creating Namespace..."
+                kubectl apply -f kubernetes/namespace.yaml
+
+                sleep 5
+
+                echo "Creating Deployment..."
+                kubectl apply -f kubernetes/deployment.yaml
+
+                echo "Creating Service..."
+                kubectl apply -f kubernetes/service.yaml
+
+                echo "Deployment Status"
+                kubectl get all -n employee-management
                 '''
             }
         }
@@ -65,9 +77,11 @@ pipeline {
         success {
             echo 'Pipeline Finished Successfully'
         }
+
         failure {
             echo 'Pipeline Failed'
         }
+
         always {
             echo 'Pipeline Finished'
         }
