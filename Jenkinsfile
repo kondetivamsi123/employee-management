@@ -17,27 +17,28 @@ pipeline {
             steps {
                 sh 'pwd'
                 sh 'ls -la'
+                sh 'which docker'
+                sh 'docker --version'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t $IMAGE_NAME ./backend'
+                sh '''
+                /usr/bin/docker build -t $IMAGE_NAME ./backend
+                '''
             }
         }
 
         stage('ACR Login') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'acr',
-                    usernameVariable: 'ACR_USER',
-                    passwordVariable: 'ACR_PASS'
+                    credentialsId: 'acr-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
-
                     sh '''
-                    echo $ACR_PASS | docker login vamsiar001.azurecr.io \
-                    -u $ACR_USER \
-                    --password-stdin
+                    echo "$DOCKER_PASS" | /usr/bin/docker login vamsiar001.azurecr.io -u "$DOCKER_USER" --password-stdin
                     '''
                 }
             }
@@ -45,31 +46,28 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                sh 'docker push $IMAGE_NAME'
+                sh '''
+                /usr/bin/docker push $IMAGE_NAME
+                '''
             }
         }
 
         stage('Deploy Kubernetes') {
             steps {
                 sh '''
-                kubectl apply -f kubernetes/namespace.yaml
-                kubectl apply -f kubernetes/deployment.yaml
-                kubectl apply -f kubernetes/service.yaml
+                kubectl apply -f kubernetes/
                 '''
             }
         }
     }
 
     post {
-
         success {
             echo 'Pipeline Finished Successfully'
         }
-
         failure {
             echo 'Pipeline Failed'
         }
-
         always {
             echo 'Pipeline Finished'
         }
