@@ -1,0 +1,5 @@
+locals {
+  project = "employee"
+  env     = "dev"
+  owner   = "vamsi"
+}
